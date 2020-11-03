@@ -19,22 +19,23 @@ import { genRouteModule, transformObjToRoute } from '/@/utils/helper/routeHelper
 import { transformRouteToMenu } from '/@/utils/helper/menuHelper';
 
 import { useMessage } from '/@/hooks/web/useMessage';
-import { warn } from 'vue';
+import { warn } from '/@/utils/log';
+
 const { createMessage } = useMessage();
 const NAME = 'permission';
 hotModuleUnregisterModule(NAME);
 @Module({ dynamic: true, namespaced: true, store, name: NAME })
 class Permission extends VuexModule {
-  // private routesState: AppRouteRecordRaw[] = [];
-
-  // 权限编码列表
+  // Permission code list
   private permCodeListState: string[] = [];
 
   // Whether the route has been dynamically added
   private isDynamicAddedRouteState = false;
 
+  // To trigger a menu update
   private lastBuildMenuTimeState = 0;
 
+  // Backstage menu list
   private backMenuListState: Menu[] = [];
 
   get getPermCodeListState() {
@@ -48,10 +49,6 @@ class Permission extends VuexModule {
   get getLastBuildMenuTimeState() {
     return this.lastBuildMenuTimeState;
   }
-
-  // get getRoutesState() {
-  //   return this.routesState;
-  // }
 
   get getIsDynamicAddedRouteState() {
     return this.isDynamicAddedRouteState;
@@ -71,11 +68,6 @@ class Permission extends VuexModule {
   commitLastBuildMenuTimeState(): void {
     this.lastBuildMenuTimeState = new Date().getTime();
   }
-
-  // @Mutation
-  // commitRoutesState(routes: AppRouteRecordRaw[]): void {
-  //   this.routesState = routes;
-  // }
 
   @Mutation
   commitDynamicAddedRouteState(added: boolean): void {

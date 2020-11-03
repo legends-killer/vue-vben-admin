@@ -8,7 +8,8 @@ import {
   computed,
   // ref,
   unref,
-  onMounted,
+  // onMounted,
+  toRaw,
 } from 'vue';
 import { Tabs } from 'ant-design-vue';
 import TabContent from './TabContent';
@@ -23,19 +24,27 @@ import { tabStore } from '/@/store/modules/tab';
 import { closeTab } from './useTabDropdown';
 import router from '/@/router';
 import { useTabs } from '/@/hooks/web/useTabs';
-import { PageEnum } from '/@/enums/pageEnum';
+// import { PageEnum } from '/@/enums/pageEnum';
 
 import './index.less';
+import { userStore } from '/@/store/modules/user';
 export default defineComponent({
   name: 'MultiTabs',
   setup() {
     let isAddAffix = false;
     const go = useGo();
     const { currentRoute } = useRouter();
-    const { addTab, activeKeyRef } = useTabs();
-    onMounted(() => {
-      addTab(unref(currentRoute).path as PageEnum);
-    });
+    const {
+      // addTab,
+      activeKeyRef,
+    } = useTabs();
+    // onMounted(() => {
+    // const route = unref(currentRoute);
+    // addTab(unref(currentRoute).path as PageEnum, false, {
+    //   query: route.query,
+    //   params: route.params,
+    // });
+    // });
 
     // 当前激活tab
     // const activeKeyRef = ref<string>('');
@@ -52,15 +61,27 @@ export default defineComponent({
 
     watch(
       () => unref(currentRoute).path,
-      (path) => {
-        if (activeKeyRef.value !== path) {
-          activeKeyRef.value = path;
+      () => {
+        if (!userStore.getTokenState) return;
+        const { path: rPath, fullPath } = unref(currentRoute);
+        if (activeKeyRef.value !== (fullPath || rPath)) {
+          activeKeyRef.value = fullPath || rPath;
         }
         // 监听路由的话虽然可以，但是路由切换的时间会造成卡顿现象？
         // 使用useTab的addTab的话，当用户手动调转，需要自行调用addTab
-        // tabStore.commitAddTab((unref(currentRoute) as unknown) as AppRouteRecordRaw);
+        tabStore.commitAddTab((unref(currentRoute) as unknown) as AppRouteRecordRaw);
+
+        // const { affix } = currentRoute.value.meta || {};
+        // if (affix) return;
+        // const hasInTab = tabStore.getTabsState.some(
+        //   (item) => item.fullPath === currentRoute.value.fullPath
+        // );
+        // if (!hasInTab) {
+        //   tabStore.commitAddTab((unref(currentRoute) as unknown) as AppRouteRecordRaw);
+        // }
       },
       {
+        // flush: 'post',
         immediate: true,
       }
     );
@@ -73,11 +94,7 @@ export default defineComponent({
       routes &&
         routes.forEach((route) => {
           if (route.meta && route.meta.affix) {
-            tabs.push({
-              path: route.path,
-              name: route.name,
-              meta: { ...route.meta },
-            });
+            tabs.push(toRaw(route) as TabItem);
           }
         });
       return tabs;
@@ -102,7 +119,9 @@ export default defineComponent({
     // 关闭当前ab
     function handleEdit(targetKey: string) {
       // 新增操作隐藏，目前只使用删除操作
-      const index = unref(getTabsState).findIndex((item) => item.path === targetKey);
+      const index = unref(getTabsState).findIndex(
+        (item) => (item.fullPath || item.path) === targetKey
+      );
       index !== -1 && closeTab(unref(getTabsState)[index]);
     }
 
@@ -114,14 +133,16 @@ export default defineComponent({
       };
       return (
         <span>
-          <TabContent {...tabContentProps} />
+          <TabContent {...(tabContentProps as any)} />
         </span>
       );
     }
     function renderTabs() {
       return unref(getTabsState).map((item: TabItem) => {
+        const key = item.query ? item.fullPath : item.path;
+
         return (
-          <Tabs.TabPane key={item.path} closable={!(item && item.meta && item.meta.affix)}>
+          <Tabs.TabPane key={key} closable={!(item && item.meta && item.meta.affix)}>
             {{
               tab: () => <TabContent tabItem={item} />,
             }}
@@ -136,8 +157,9 @@ export default defineComponent({
           <Tabs
             type="editable-card"
             size="small"
+            animated={false}
             hideAdd={true}
-            tabBarGutter={2}
+            tabBarGutter={4}
             activeKey={unref(activeKeyRef)}
             onChange={handleChange}
             onEdit={handleEdit}

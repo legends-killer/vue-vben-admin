@@ -24,7 +24,7 @@ export default defineComponent({
       schemas: [
         {
           field: 'password',
-          label: '锁屏密码',
+          label: '',
           component: 'InputPassword',
           componentProps: {
             placeholder: '请输入锁屏密码',
@@ -40,10 +40,11 @@ export default defineComponent({
       let password: string | undefined = '';
 
       try {
-        const values = (await validateFields()) as any;
-        password = values.password;
         if (!valid) {
           password = undefined;
+        } else {
+          const values = (await validateFields()) as any;
+          password = values.password;
         }
         setModalProps({
           visible: false,

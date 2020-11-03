@@ -3,9 +3,11 @@ import path from 'path';
 import { networkInterfaces } from 'os';
 import dotenv from 'dotenv';
 import chalk from 'chalk';
+// import execa from 'execa';
 
 export const isFunction = (arg: unknown): arg is (...args: any[]) => any =>
   typeof arg === 'function';
+
 export const isRegExp = (arg: unknown): arg is RegExp =>
   Object.prototype.toString.call(arg) === '[object RegExp]';
 
@@ -42,6 +44,9 @@ export function readAllFile(root: string, reg: RegExp) {
   return resultArr;
 }
 
+/**
+ * get client ip address
+ */
 export function getIPAddress() {
   let interfaces = networkInterfaces();
   for (let devName in interfaces) {
@@ -66,19 +71,40 @@ export function isProdFn(): boolean {
   return process.env.NODE_ENV === 'production';
 }
 
+/**
+ * Whether to generate package preview
+ */
 export function isReportMode(): boolean {
   return process.env.REPORT === 'true';
+}
+
+/**
+ * Whether to generate gzip for packaging
+ */
+export function isBuildGzip(): boolean {
+  return process.env.VITE_BUILD_GZIP === 'true';
+}
+
+/**
+ *  Whether to generate package site
+ */
+export function isSiteMode(): boolean {
+  return process.env.SITE === 'true';
 }
 
 export interface ViteEnv {
   VITE_PORT: number;
   VITE_USE_MOCK: boolean;
+  VITE_USE_PWA: boolean;
   VITE_PUBLIC_PATH: string;
   VITE_PROXY: [string, string][];
   VITE_GLOB_APP_TITLE: string;
   VITE_USE_CDN: boolean;
+  VITE_DROP_CONSOLE: boolean;
+  VITE_BUILD_GZIP: boolean;
 }
 
+// Read all environment variable configuration files to process.env
 export function loadEnv(): ViteEnv {
   const env = process.env.NODE_ENV;
   const ret: any = {};
@@ -106,6 +132,11 @@ export function loadEnv(): ViteEnv {
   return ret;
 }
 
+/**
+ * Get the environment variables starting with the specified prefix
+ * @param match prefix
+ * @param confFiles ext
+ */
 export function getEnvConfig(match = 'VITE_GLOB_', confFiles = ['.env', '.env.production']) {
   let envConfig = {};
   confFiles.forEach((item) => {
@@ -124,30 +155,45 @@ export function getEnvConfig(match = 'VITE_GLOB_', confFiles = ['.env', '.env.pr
   return envConfig;
 }
 
+function consoleFn(color: string, message: any) {
+  console.log(
+    chalk.blue.bold('****************  ') +
+      (chalk as any)[color].bold(message) +
+      chalk.blue.bold('  ****************')
+  );
+}
+
+/**
+ * warnConsole
+ * @param message
+ */
 export function successConsole(message: any) {
-  console.log(
-    chalk.blue.bold('****************  ') +
-      chalk.green.bold('✨ ' + message) +
-      chalk.blue.bold('  ****************')
-  );
+  consoleFn('green', '✨ ' + message);
 }
 
+/**
+ * warnConsole
+ * @param message
+ */
 export function errorConsole(message: any) {
-  console.log(
-    chalk.blue.bold('****************  ') +
-      chalk.red.bold('✨ ' + message) +
-      chalk.blue.bold('  ****************')
-  );
+  consoleFn('red', '✨ ' + message);
 }
 
+/**
+ * warnConsole
+ * @param message message
+ */
 export function warnConsole(message: any) {
-  console.log(
-    chalk.blue.bold('****************  ') +
-      chalk.yellow.bold('✨ ' + message) +
-      chalk.blue.bold('  ****************')
-  );
+  consoleFn('yellow', '✨ ' + message);
 }
 
+/**
+ * Get user root directory
+ * @param dir file path
+ */
 export function getCwdPath(...dir: string[]) {
   return path.resolve(process.cwd(), ...dir);
 }
+
+// export const run = (bin: string, args: any, opts = {}) =>
+//   execa(bin, args, { stdio: 'inherit', ...opts });

@@ -1,19 +1,17 @@
 import { computed, defineComponent, unref, Transition, KeepAlive, toRaw } from 'vue';
-
-import { appStore } from '/@/store/modules/app';
-
-import { useTransition } from './useTransition';
-
 import { RouterView, RouteLocation } from 'vue-router';
-import { tabStore } from '/@/store/modules/tab';
+
 import FrameLayout from '/@/layouts/iframe/index.vue';
 
+import { useTransition } from './useTransition';
 import { useSetting } from '/@/hooks/core/useSetting';
-// import { useRouter } from 'vue-router';
+
+import { tabStore } from '/@/store/modules/tab';
+import { appStore } from '/@/store/modules/app';
+
 export default defineComponent({
   name: 'PageLayout',
   setup() {
-    // const { currentRoute } = useRouter();
     const getProjectConfigRef = computed(() => {
       return appStore.getProjectConfig;
     });
@@ -40,19 +38,23 @@ export default defineComponent({
           <RouterView>
             {{
               default: ({ Component, route }: { Component: any; route: RouteLocation }) => {
-                const name = route.meta.inTab ? ' ' : null;
+                // No longer show animations that are already in the tab
+                const name = route.meta.inTab ? 'fade' : null;
+
+                // TODO add key?
                 const Content = openCache ? (
                   <KeepAlive max={max} include={cacheTabs}>
-                    <Component {...route.params} />
+                    <Component />
                   </KeepAlive>
                 ) : (
-                  <Component {...route.params} />
+                  <Component />
                 );
                 return openRouterTransition ? (
                   <Transition
                     {...on}
                     name={name || route.meta.transitionName || routerTransition}
                     mode="out-in"
+                    appear={true}
                   >
                     {() => Content}
                   </Transition>

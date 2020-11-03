@@ -2,21 +2,27 @@ import type { MenuState } from './types';
 import type { Menu as MenuType } from '/@/router/types';
 
 import { computed, defineComponent, unref, reactive, toRef, watch, onMounted, ref } from 'vue';
-import { basicProps } from './props';
 import { Menu } from 'ant-design-vue';
-import { MenuModeEnum, MenuTypeEnum } from '/@/enums/menuEnum';
-import { menuStore } from '/@/store/modules/menu';
-import { getSlot } from '/@/utils/helper/tsxHelper';
-import { ScrollContainer } from '/@/components/Container/index';
 import SearchInput from './SearchInput.vue';
-import './index.less';
-import { menuHasChildren } from './helper';
 import MenuContent from './MenuContent';
+
+import { MenuModeEnum, MenuTypeEnum } from '/@/enums/menuEnum';
+
+import { menuStore } from '/@/store/modules/menu';
+import { appStore } from '/@/store/modules/app';
+
 import { useSearchInput } from './useSearchInput';
 import { useOpenKeys } from './useOpenKeys';
 import { useRouter } from 'vue-router';
+
 import { isFunction } from '/@/utils/is';
+import { getSlot } from '/@/utils/helper/tsxHelper';
+import { menuHasChildren } from './helper';
+
 import { getCurrentParentPath } from '/@/router/menus';
+
+import { basicProps } from './props';
+import './index.less';
 export default defineComponent({
   name: 'BasicMenu',
   props: basicProps,
@@ -45,7 +51,8 @@ export default defineComponent({
       menuState,
       toRef(props, 'items'),
       toRef(props, 'flatItems'),
-      toRef(props, 'isAppMenu')
+      toRef(props, 'isAppMenu'),
+      toRef(props, 'mode')
     );
 
     const getOpenKeys = computed(() => {
@@ -54,19 +61,21 @@ export default defineComponent({
       }
       return menuState.openKeys;
     });
+
     // menu外层样式
     const getMenuWrapStyle = computed((): any => {
       const { showLogo, search } = props;
       let offset = 0;
       if (search) {
-        offset += 60;
-      }
-      if (showLogo) {
         offset += 54;
       }
+      if (showLogo) {
+        offset += 46;
+      }
       return {
-        height: `calc(100% - ${offset}px)`,
+        height: `calc(100% - ${offset - 10}px)`,
         position: 'relative',
+        overflowY: 'auto',
       };
     });
 
@@ -74,26 +83,26 @@ export default defineComponent({
     const transparentMenuClass = computed(() => {
       const { type } = props;
       const { mode } = menuState;
-      if (
-        [MenuTypeEnum.MIX, MenuTypeEnum.SIDEBAR].includes(type) &&
-        mode !== MenuModeEnum.HORIZONTAL
-      ) {
-        return `basic-menu-bg__sidebar`;
-      }
+      const cls: string[] = [];
       if (
         (type === MenuTypeEnum.TOP_MENU && mode === MenuModeEnum.HORIZONTAL) ||
         props.appendClass
       ) {
-        return `basic-menu-bg__sidebar-hor`;
+        cls.push('basic-menu__sidebar-hor');
       }
-      return '';
+
+      if (!props.isTop && props.isAppMenu && appStore.getProjectConfig.menuSetting.split) {
+        cls.push('basic-menu__second');
+      }
+      return cls;
     });
 
     watch(
       () => currentRoute.value.name,
       (name: string) => {
-        name !== 'Redirect' && handleMenuChange();
-        getParentPath();
+        if (name === 'Redirect') return;
+        handleMenuChange();
+        props.isTop && appStore.getProjectConfig.menuSetting.split && getParentPath();
       }
     );
 
@@ -128,6 +137,7 @@ export default defineComponent({
       menuState.selectedKeys = [path];
       emit('menuClick', menu);
     }
+
     function handleMenuChange() {
       const { flatItems } = props;
       if (!unref(flatItems) || flatItems.length === 0) {
@@ -143,15 +153,16 @@ export default defineComponent({
         resetKeys();
       }
     }
+
+    const showTitle = computed(() => {
+      return props.collapsedShowTitle && menuStore.getCollapsedState;
+    });
+
     // render menu item
     function renderMenuItem(menuList?: MenuType[], index = 1) {
-      if (!menuList) {
-        return;
-      }
+      if (!menuList) return;
       const { appendClass } = props;
       const levelCls = `basic-menu-item__level${index} ${menuState.theme} `;
-
-      const showTitle = props.isAppMenu ? !menuStore.getCollapsedState : true;
       return menuList.map((menu) => {
         if (!menu) {
           return null;
@@ -171,7 +182,7 @@ export default defineComponent({
                 <MenuContent
                   item={menu}
                   level={index}
-                  showTitle={showTitle}
+                  showTitle={unref(showTitle)}
                   searchValue={menuState.searchValue}
                 />,
               ]}
@@ -183,7 +194,7 @@ export default defineComponent({
             {{
               title: () => [
                 <MenuContent
-                  showTitle={showTitle}
+                  showTitle={unref(showTitle)}
                   item={menu}
                   level={index}
                   searchValue={menuState.searchValue}
@@ -209,7 +220,7 @@ export default defineComponent({
         : {};
       return (
         <Menu
-          // forceSubMenuRender={props.isAppMenu}
+          forceSubMenuRender={props.isAppMenu}
           selectedKeys={selectedKeys}
           defaultSelectedKeys={defaultSelectedKeys}
           mode={mode}
@@ -217,7 +228,11 @@ export default defineComponent({
           inlineIndent={props.inlineIndent}
           theme={unref(theme)}
           onOpenChange={handleOpenChange}
-          class={['basic-menu', unref(transparentMenuClass)]}
+          class={[
+            'basic-menu',
+            props.collapsedShowTitle && 'collapsed-show-title',
+            ...unref(transparentMenuClass),
+          ]}
           {...inlineCollapsedObj}
         >
           {{
@@ -230,14 +245,14 @@ export default defineComponent({
     onMounted(async () => {
       getParentPath();
     });
+
     return () => {
       const { getCollapsedState } = menuStore;
       const { mode } = props;
-
       return mode === MenuModeEnum.HORIZONTAL ? (
         renderMenu()
       ) : (
-        <section class={`basic-menu-wrap`}>
+        <section class={[`basic-menu-wrap`, !unref(showTitle) && 'hide-title']}>
           {getSlot(slots, 'header')}
           <SearchInput
             class={!props.search ? 'hidden' : ''}
@@ -246,8 +261,8 @@ export default defineComponent({
             onClick={handleInputClick}
             collapsed={getCollapsedState}
           />
-          <section style={unref(getMenuWrapStyle)}>
-            <ScrollContainer>{() => renderMenu()}</ScrollContainer>
+          <section style={unref(getMenuWrapStyle)} class="basic-menu__content">
+            {renderMenu()}
           </section>
         </section>
       );

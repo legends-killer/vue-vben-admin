@@ -1,30 +1,19 @@
+import type { DrawerInstance, DrawerProps } from './types';
+
+import { defineComponent, ref, computed, watchEffect, watch, unref, nextTick, toRaw } from 'vue';
 import { Drawer, Row, Col, Button } from 'ant-design-vue';
-import {
-  defineComponent,
-  ref,
-  computed,
-  watchEffect,
-  watch,
-  unref,
-  getCurrentInstance,
-  nextTick,
-  toRaw,
-} from 'vue';
+
 import { BasicTitle } from '/@/components/Basic';
-import { ScrollContainer, ScrollContainerOptions } from '/@/components/Container/index';
 import { FullLoading } from '/@/components/Loading/index';
-
-import { getSlot } from '/@/utils/helper/tsxHelper';
-
-import { DrawerInstance, DrawerProps, DrawerType } from './types';
+import { LeftOutlined } from '@ant-design/icons-vue';
 
 import { basicProps } from './props';
+
+import { getSlot } from '/@/utils/helper/tsxHelper';
 import { isFunction, isNumber } from '/@/utils/is';
-import { LeftOutlined } from '@ant-design/icons-vue';
-// import { appStore } from '/@/store/modules/app';
-// import { useRouter } from 'vue-router';
 import { buildUUID } from '/@/utils/uuid';
 import { deepMerge } from '/@/utils';
+
 import './index.less';
 
 const prefixCls = 'basic-drawer';
@@ -33,30 +22,17 @@ export default defineComponent({
   props: basicProps,
   emits: ['visible-change', 'ok', 'close', 'register'],
   setup(props, { slots, emit, attrs }) {
-    // const { currentRoute } = useRouter();
     const scrollRef = ref<any>(null);
-    /**
-     * @description: 获取配置ScrollContainer
-     */
-    const getScrollOptions = computed(
-      (): ScrollContainerOptions => {
-        return {
-          ...(props.scrollOptions as any),
-        };
-      }
-    );
 
     const visibleRef = ref(false);
     const propsRef = ref<Partial<DrawerProps> | null>(null);
 
-    // 自定义title组件：获得title
     const getMergeProps = computed((): any => {
       return deepMerge(toRaw(props), unref(propsRef));
     });
 
     const getProps = computed(() => {
       const opt: any = {
-        // @ts-ignore
         placement: 'right',
         ...attrs,
         ...props,
@@ -65,27 +41,27 @@ export default defineComponent({
       };
       opt.title = undefined;
 
-      if (opt.drawerType === DrawerType.DETAIL) {
+      if (opt.isDetail) {
         if (!opt.width) {
           opt.width = '100%';
         }
         opt.wrapClassName = opt.wrapClassName
           ? `${opt.wrapClassName} ${prefixCls}__detail`
           : `${prefixCls}__detail`;
-        // opt.maskClosable = false;
         if (!opt.getContainer) {
           opt.getContainer = `.default-layout__main`;
         }
       }
       return opt;
     });
+
     watchEffect(() => {
       visibleRef.value = props.visible;
     });
+
     watch(
       () => visibleRef.value,
       (visible) => {
-        // appStore.commitLockMainScrollState(visible);
         nextTick(() => {
           emit('visible-change', visible);
         });
@@ -95,33 +71,15 @@ export default defineComponent({
       }
     );
 
-    // watch(
-    //   () => currentRoute.value.path,
-    //   () => {
-    //     if (unref(visibleRef)) {
-    //       visibleRef.value = false;
-    //     }
-    //   }
-    // );
-    function scrollBottom() {
-      const scroll = unref(scrollRef);
-      if (scroll) {
-        scroll.scrollBottom();
+    // 底部按钮自定义实现,
+    const getFooterHeight = computed(() => {
+      const { footerHeight, showFooter }: DrawerProps = unref(getProps);
+      if (showFooter && footerHeight) {
+        return isNumber(footerHeight) ? `${footerHeight}px` : `${footerHeight.replace('px', '')}px`;
       }
-    }
-    function scrollTo(to: number) {
-      const scroll = unref(scrollRef);
-      if (scroll) {
-        scroll.scrollTo(to);
-      }
-    }
-    function getScrollWrap() {
-      const scroll = unref(scrollRef);
-      if (scroll) {
-        return scroll.getScrollWrap();
-      }
-      return null;
-    }
+      return `0px`;
+    });
+
     // 取消事件
     async function onClose(e: any) {
       const { closeFunc } = unref(getProps);
@@ -142,14 +100,6 @@ export default defineComponent({
       }
     }
 
-    // 底部按钮自定义实现,
-    const getFooterHeight = computed(() => {
-      const { footerHeight, showFooter }: DrawerProps = unref(getProps);
-      if (showFooter && footerHeight) {
-        return isNumber(footerHeight) ? `${footerHeight}px` : `${footerHeight.replace('px', '')}px`;
-      }
-      return 0;
-    });
     function renderFooter() {
       const {
         showCancelBtn,
@@ -178,11 +128,11 @@ export default defineComponent({
             {showOkBtn && (
               <Button
                 type={okType}
-                {...okButtonProps}
-                loading={confirmLoading}
                 onClick={() => {
                   emit('ok');
                 }}
+                {...okButtonProps}
+                loading={confirmLoading}
               >
                 {() => okText}
               </Button>
@@ -196,25 +146,23 @@ export default defineComponent({
 
     function renderHeader() {
       const { title } = unref(getMergeProps);
-      return props.drawerType === DrawerType.DETAIL ? (
+      return props.isDetail ? (
         getSlot(slots, 'title') || (
           <Row type="flex" align="middle" class={`${prefixCls}__detail-header`}>
             {() => (
               <>
                 {props.showDetailBack && (
-                  <Col class="mx-2">
-                    {() => (
-                      <Button size="small" type="link" onClick={onClose}>
-                        {() => <LeftOutlined />}
-                      </Button>
-                    )}
-                  </Col>
+                  <Button size="small" type="link" onClick={onClose}>
+                    {() => <LeftOutlined />}
+                  </Button>
                 )}
+
                 {title && (
                   <Col style="flex:1" class={[`${prefixCls}__detail-title`, 'ellipsis', 'px-2']}>
                     {() => title}
                   </Col>
                 )}
+
                 {getSlot(slots, 'titleToolbar')}
               </>
             )}
@@ -225,12 +173,6 @@ export default defineComponent({
       );
     }
 
-    const currentInstance = getCurrentInstance() as any;
-    if (getCurrentInstance()) {
-      currentInstance.scrollBottom = scrollBottom;
-      currentInstance.scrollTo = scrollTo;
-      currentInstance.getScrollWrap = getScrollWrap;
-    }
     const drawerInstance: DrawerInstance = {
       setDrawerProps: setDrawerProps,
     };
@@ -240,7 +182,6 @@ export default defineComponent({
 
     return () => {
       const footerHeight = unref(getFooterHeight);
-
       return (
         <Drawer
           class={prefixCls}
@@ -254,20 +195,24 @@ export default defineComponent({
             title: () => renderHeader(),
             default: () => (
               <>
-                <FullLoading
-                  absolute
-                  class={[!unref(getProps).loading ? 'hidden' : '']}
-                  tip="加载中..."
-                />
-                <ScrollContainer
+                <div
                   ref={scrollRef}
-                  {...{ ...attrs, ...unref(getScrollOptions) }}
+                  {...attrs}
                   style={{
+                    position: 'relative',
                     height: `calc(100% - ${footerHeight})`,
+                    overflow: 'auto',
+                    padding: '16px',
+                    paddingBottom: '30px',
                   }}
                 >
-                  {() => getSlot(slots, 'default')}
-                </ScrollContainer>
+                  <FullLoading
+                    absolute
+                    tip="加载中..."
+                    class={[!unref(getProps).loading ? 'hidden' : '']}
+                  />
+                  {getSlot(slots, 'default')}
+                </div>
                 {renderFooter()}
               </>
             ),

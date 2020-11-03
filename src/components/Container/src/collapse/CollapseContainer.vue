@@ -1,15 +1,19 @@
 <template>
   <div class="collapse-container p-2">
-    <CollapseHeader v-bind="$props" :show="show" @expand="handleExpand" />
+    <CollapseHeader v-bind="$props" :show="show" @expand="handleExpand">
+      <template #title>
+        <slot name="title" />
+      </template>
+    </CollapseHeader>
     <CollapseTransition :enable="canExpan">
       <Skeleton v-if="loading" />
       <div class="collapse-container__body" v-else v-show="show">
-        <LazyContainer :timeout="lazyTime" v-if="lazy">
+        <!-- <LazyContainer :timeout="lazyTime" v-if="lazy">
           <slot />
           <template #skeleton>
             <slot name="lazySkeleton" />
           </template>
-        </LazyContainer>
+        </LazyContainer> -->
         <slot />
       </div>
     </CollapseTransition>
@@ -24,13 +28,18 @@
   import CollapseHeader from './CollapseHeader.vue';
   import { Skeleton } from 'ant-design-vue';
 
-  import LazyContainer from '../LazyContainer';
+  // import LazyContainer from '../LazyContainer';
 
   import { triggerWindowResize } from '/@/utils/event/triggerWindowResizeEvent';
   // hook
   import { useTimeout } from '/@/hooks/core/useTimeout';
   export default defineComponent({
-    components: { Skeleton, LazyContainer, CollapseHeader, CollapseTransition },
+    components: {
+      Skeleton,
+      // LazyContainer,
+      CollapseHeader,
+      CollapseTransition,
+    },
     name: 'CollapseContainer',
     props: {
       // 标题
@@ -93,7 +102,7 @@
 <style lang="less">
   .collapse-container {
     background: #fff;
-    border-radius: 8px;
+    border-radius: 2px;
     transition: all 0.3s ease-in-out;
 
     &.no-shadow {

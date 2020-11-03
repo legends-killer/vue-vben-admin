@@ -65,7 +65,7 @@ const routerTransitionOptions = [
   RouterTransitionEnum.ZOOM_FADE,
   RouterTransitionEnum.FADE,
   RouterTransitionEnum.ZOOM_OUT,
-  RouterTransitionEnum.SIDE_FADE,
+  RouterTransitionEnum.FADE_SIDE,
   RouterTransitionEnum.FADE_BOTTOM,
 ].map((item) => {
   return {
@@ -208,7 +208,14 @@ export default defineComponent({
       const {
         contentMode,
         headerSetting: { fixed },
-        menuSetting: { hasDrag, collapsed, showSearch, menuWidth, topMenuAlign } = {},
+        menuSetting: {
+          hasDrag,
+          collapsed,
+          showSearch,
+          menuWidth,
+          topMenuAlign,
+          collapsedShowTitle,
+        } = {},
       } = appStore.getProjectConfig;
       return [
         renderSwitchItem('侧边菜单拖拽', {
@@ -231,6 +238,13 @@ export default defineComponent({
           },
           def: collapsed,
           disabled: !unref(getShowMenuRef),
+        }),
+        renderSwitchItem('折叠菜单显示名称', {
+          handler: (e) => {
+            baseHandler('collapsedShowTitle', e);
+          },
+          def: collapsedShowTitle,
+          disabled: !unref(getShowMenuRef) || !collapsed,
         }),
 
         renderSwitchItem('固定header', {
@@ -329,6 +343,7 @@ export default defineComponent({
         menuSetting: { show: showMenu },
         multiTabsSetting: { show: showMultiple, showQuick, showIcon: showTabIcon },
         showBreadCrumb,
+        showBreadCrumbIcon,
       } = unref(getProjectConfigRef);
       return [
         renderSwitchItem('面包屑', {
@@ -336,6 +351,13 @@ export default defineComponent({
             baseHandler('showBreadCrumb', e);
           },
           def: showBreadCrumb,
+          disabled: !unref(getShowHeaderRef),
+        }),
+        renderSwitchItem('面包屑图标', {
+          handler: (e) => {
+            baseHandler('showBreadCrumbIcon', e);
+          },
+          def: showBreadCrumbIcon,
           disabled: !unref(getShowHeaderRef),
         }),
         renderSwitchItem('标签页', {
@@ -406,6 +428,7 @@ export default defineComponent({
           menuSetting: {
             mode,
             type,
+            collapsed: false,
             ...splitOpt,
           },
         };
@@ -434,6 +457,11 @@ export default defineComponent({
           showBreadCrumb: value,
         };
       }
+      if (event === 'showBreadCrumbIcon') {
+        config = {
+          showBreadCrumbIcon: value,
+        };
+      }
       if (event === 'collapsed') {
         config = {
           menuSetting: {
@@ -445,6 +473,13 @@ export default defineComponent({
         config = {
           menuSetting: {
             menuWidth: value,
+          },
+        };
+      }
+      if (event === 'collapsedShowTitle') {
+        config = {
+          menuSetting: {
+            collapsedShowTitle: value,
           },
         };
       }

@@ -15,6 +15,7 @@ const reg = /[\u4E00-\u9FA5\uF900-\uFA2D]/;
 let NEED_INSTALL = false;
 
 export async function runPreserve() {
+  // rc.6 fixed
   const cwdPath = process.cwd();
   if (reg.test(cwdPath)) {
     errorConsole(
@@ -69,3 +70,5 @@ export async function runPreserve() {
     } catch (error) {}
   }
 }
+
+runPreserve();

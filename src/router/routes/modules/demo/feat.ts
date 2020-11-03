@@ -10,7 +10,7 @@ export default {
     redirect: '/feat/icon',
     meta: {
       icon: 'ic:outline-featured-play-list',
-      title: 'Feat',
+      title: '页面功能',
     },
   },
 
@@ -18,7 +18,7 @@ export default {
     {
       path: '/icon',
       name: 'IconDemo',
-      component: () => import('/@/views/demo/comp/icon/index.vue'),
+      component: () => import('/@/views/demo/feat/icon/index.vue'),
       meta: {
         title: '图标',
       },
@@ -43,7 +43,7 @@ export default {
     {
       path: '/click-out-side',
       name: 'ClickOutSideDemo',
-      component: () => import('/@/views/demo/comp/click-out-side/index.vue'),
+      component: () => import('/@/views/demo/feat/click-out-side/index.vue'),
       meta: {
         title: 'ClickOutSide组件',
       },
@@ -94,6 +94,15 @@ export default {
       component: () => import('/@/views/demo/feat/full-screen/index.vue'),
       meta: {
         title: '全屏',
+      },
+    },
+    {
+      path: '/testTab/:id',
+      name: 'TestTab',
+      component: () => import('/@/views/demo/feat/tab-params/index.vue'),
+      meta: {
+        title: 'Tab带参',
+        carryParam: true,
       },
     },
   ],

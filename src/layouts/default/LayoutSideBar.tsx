@@ -4,14 +4,15 @@ import { Layout } from 'ant-design-vue';
 import SideBarTrigger from './SideBarTrigger';
 import { menuStore } from '/@/store/modules/menu';
 
-import darkMiniIMg from '/@/assets/images/sidebar/dark-mini.png';
-import lightMiniImg from '/@/assets/images/sidebar/light-mini.png';
-import darkImg from '/@/assets/images/sidebar/dark.png';
-import lightImg from '/@/assets/images/sidebar/light.png';
+// import darkMiniIMg from '/@/assets/images/sidebar/dark-mini.png';
+// import lightMiniImg from '/@/assets/images/sidebar/light-mini.png';
+// import lightImg from '/@/assets/images/sidebar/light.png';
 import { appStore } from '/@/store/modules/app';
-import { MenuModeEnum, MenuSplitTyeEnum, MenuThemeEnum } from '/@/enums/menuEnum';
+import { MenuModeEnum, MenuSplitTyeEnum } from '/@/enums/menuEnum';
+import { SIDE_BAR_MINI_WIDTH, SIDE_BAR_SHOW_TIT_MINI_WIDTH } from '/@/enums/appEnum';
 import { useDebounce } from '/@/hooks/core/useDebounce';
 import LayoutMenu from './LayoutMenu';
+
 export default defineComponent({
   name: 'DefaultLayoutSideBar',
   setup() {
@@ -25,21 +26,11 @@ export default defineComponent({
       return appStore.getProjectConfig;
     });
 
-    // 根据展开状态设置背景图片
-    const getStyle = computed((): any => {
-      const collapse = unref(collapseRef);
-
-      const theme = unref(getProjectConfigRef).menuSetting.theme;
-      let bg = '';
-      if (theme === MenuThemeEnum.DARK) {
-        bg = collapse ? darkMiniIMg : darkImg;
-      }
-      if (theme === MenuThemeEnum.LIGHT) {
-        bg = collapse ? lightMiniImg : lightImg;
-      }
-      return {
-        'background-image': `url(${bg})`,
-      };
+    const getMiniWidth = computed(() => {
+      const {
+        menuSetting: { collapsedShowTitle },
+      } = unref(getProjectConfigRef);
+      return collapsedShowTitle ? SIDE_BAR_SHOW_TIT_MINI_WIDTH : SIDE_BAR_MINI_WIDTH;
     });
 
     function onCollapseChange(val: boolean) {
@@ -60,7 +51,7 @@ export default defineComponent({
         innerE = innerE || window.event;
         // let tarnameb = innerE.target || innerE.srcElement;
         const maxT = 600;
-        const minT = 80;
+        const minT = unref(getMiniWidth);
         iT < 0 && (iT = 0);
         iT > maxT && (iT = maxT);
         iT < minT && (iT = minT);
@@ -78,13 +69,13 @@ export default defineComponent({
         const width = parseInt(wrap.style.width);
         menuStore.commitDragStartState(false);
         if (!menuStore.getCollapsedState) {
-          if (width > 100) {
+          if (width > unref(getMiniWidth) + 20) {
             setMenuWidth(width);
           } else {
             menuStore.commitCollapsedState(true);
           }
         } else {
-          if (width > 80) {
+          if (width > unref(getMiniWidth)) {
             setMenuWidth(width);
             menuStore.commitCollapsedState(false);
           }
@@ -133,13 +124,13 @@ export default defineComponent({
 
     const getDragBarStyle = computed(() => {
       if (menuStore.getCollapsedState) {
-        return { left: '80px' };
+        return { left: `${unref(getMiniWidth)}px` };
       }
       return {};
     });
 
     const getCollapsedWidth = computed(() => {
-      return unref(brokenRef) ? 0 : 80;
+      return unref(brokenRef) ? 0 : unref(getMiniWidth);
     });
 
     function renderDragLine() {
@@ -170,7 +161,6 @@ export default defineComponent({
           class="layout-sidebar"
           ref={sideRef}
           onBreakpoint={handleBreakpoint}
-          style={unref(getStyle)}
         >
           {{
             trigger: () => <SideBarTrigger />,

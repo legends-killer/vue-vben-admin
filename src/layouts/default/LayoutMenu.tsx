@@ -22,8 +22,8 @@ import {
 import { useRouter } from 'vue-router';
 import { useThrottle } from '/@/hooks/core/useThrottle';
 import { permissionStore } from '/@/store/modules/permission';
-import { useTabs } from '/@/hooks/web/useTabs';
-import { PageEnum } from '/@/enums/pageEnum';
+// import { useTabs } from '/@/hooks/web/useTabs';
+// import { PageEnum } from '/@/enums/pageEnum';
 
 // import
 export default defineComponent({
@@ -45,6 +45,10 @@ export default defineComponent({
       type: Boolean as PropType<boolean>,
       default: true,
     },
+    isTop: {
+      type: Boolean as PropType<boolean>,
+      default: false,
+    },
     menuMode: {
       type: [String] as PropType<MenuModeEnum | null>,
       default: '',
@@ -53,8 +57,8 @@ export default defineComponent({
   setup(props) {
     const menusRef = ref<Menu[]>([]);
     const flatMenusRef = ref<Menu[]>([]);
-    const { currentRoute } = useRouter();
-    const { addTab } = useTabs();
+    const { currentRoute, push } = useRouter();
+    // const { addTab } = useTabs();
 
     const getProjectConfigRef = computed(() => {
       return appStore.getProjectConfig;
@@ -105,8 +109,22 @@ export default defineComponent({
       // 菜单分割模式-left
       if (splitType === MenuSplitTyeEnum.LEFT) {
         const children = await getChildrenMenus(parentPath);
-        if (!children) return;
+        if (!children) {
+          appStore.commitProjectConfigState({
+            menuSetting: {
+              show: false,
+            },
+          });
+          flatMenusRef.value = [];
+          menusRef.value = [];
+          return;
+        }
         const flatChildren = await getFlatChildrenMenus(children);
+        appStore.commitProjectConfigState({
+          menuSetting: {
+            show: true,
+          },
+        });
         flatMenusRef.value = flatChildren;
         menusRef.value = children;
       }
@@ -144,7 +162,8 @@ export default defineComponent({
         if (splitType === MenuSplitTyeEnum.TOP) {
           menuStore.commitCurrentTopSplitMenuPathState(path);
         }
-        addTab(path as PageEnum, true);
+        push(path);
+        // addTab(path as PageEnum, true);
       }
     }
 
@@ -177,13 +196,12 @@ export default defineComponent({
     return () => {
       const {
         showLogo,
-        menuSetting: { type: menuType, mode, theme, collapsed },
+        menuSetting: { type: menuType, mode, theme, collapsed, collapsedShowTitle },
       } = unref(getProjectConfigRef);
 
       const isSidebarType = menuType === MenuTypeEnum.SIDEBAR;
       const isShowLogo = showLogo && isSidebarType;
       const themeData = props.theme || theme;
-
       return (
         <BasicMenu
           beforeClickFn={beforeMenuClickFn}
@@ -191,6 +209,7 @@ export default defineComponent({
           type={menuType}
           mode={props.menuMode || mode}
           class="layout-menu"
+          collapsedShowTitle={collapsedShowTitle}
           theme={themeData}
           showLogo={isShowLogo}
           search={unref(showSearchRef) && !collapsed}
@@ -198,6 +217,7 @@ export default defineComponent({
           flatItems={unref(flatMenusRef)}
           onClickSearchInput={handleClickSearchInput}
           appendClass={props.splitType === MenuSplitTyeEnum.TOP}
+          isTop={props.isTop}
         >
           {{
             header: () =>

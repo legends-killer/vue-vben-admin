@@ -24,6 +24,14 @@ export default {
       },
     },
     {
+      path: '/transition',
+      name: 'transitionDemo',
+      component: () => import('/@/views/demo/comp/transition/index.vue'),
+      meta: {
+        title: '动画组件',
+      },
+    },
+    {
       path: '/countTo',
       name: 'CountTo',
       component: () => import('/@/views/demo/comp/count-to/index.vue'),
@@ -91,7 +99,14 @@ export default {
         title: '详情组件',
       },
     },
-
+    {
+      path: '/lazy',
+      name: 'lazyDemo',
+      component: () => import('/@/views/demo/comp/lazy/index.vue'),
+      meta: {
+        title: '懒加载组件',
+      },
+    },
     {
       path: '/verify',
       name: 'VerifyDemo',

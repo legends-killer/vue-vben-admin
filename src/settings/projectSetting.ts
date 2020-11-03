@@ -2,7 +2,7 @@ import type { ProjectConfig } from '/@/types/config';
 
 import { MenuTypeEnum, MenuThemeEnum, MenuModeEnum } from '/@/enums/menuEnum';
 import { ContentEnum, PermissionModeEnum, RouterTransitionEnum } from '/@/enums/appEnum';
-import { primaryColor } from '../../build/config/glob/lessModifyVars';
+import { primaryColor } from '../../build/config/lessModifyVars';
 import { isProdMode } from '/@/utils/env';
 // ! 改动后需要清空浏览器缓存
 const setting: ProjectConfig = {
@@ -30,7 +30,7 @@ const setting: ProjectConfig = {
     // theme
     theme: MenuThemeEnum.LIGHT,
     // 开启锁屏功能
-    useLockPage: isProdMode(),
+    useLockPage: true,
     // 显示刷新按钮
     showRedo: true,
     // 显示全屏按钮
@@ -39,19 +39,23 @@ const setting: ProjectConfig = {
     showDoc: true,
     //  是否显示github
     showGithub: true,
+    // 显示消息中心按钮
+    showNotice: true,
   },
   // 菜单配置
   menuSetting: {
     // 菜单折叠
     collapsed: false,
+    // 折叠菜单时候是否显示菜单名
+    collapsedShowTitle: false,
     // 是否可拖拽
-    hasDrag: true,
+    hasDrag: false,
     // 是否显示
     show: true,
     // 是否显示搜索框
     showSearch: true,
     // 菜单宽度
-    menuWidth: 180,
+    menuWidth: 200,
     // 菜单模式
     mode: MenuModeEnum.INLINE,
     // 菜单类型
@@ -61,7 +65,7 @@ const setting: ProjectConfig = {
     // 分割菜单
     split: false,
     // 顶部菜单布局
-    topMenuAlign: 'start',
+    topMenuAlign: 'center',
   },
   // 消息配置
   messageSetting: {
@@ -79,25 +83,28 @@ const setting: ProjectConfig = {
     // 开启快速操作
     showQuick: true,
     // 显示icon
-    showIcon: true,
+    showIcon: false,
     // 标签页缓存最大数量
     max: 12,
   },
   // 是否开启KeepAlive缓存  开发时候最好关闭,不然每次都需要清除缓存
   openKeepAlive: true,
 
-  // 自动锁屏时间，为0不锁屏。 单位分钟 默认1个小时
+  // 自动锁屏时间，为0不锁屏。 单位分钟 默认0
   lockTime: 0,
   // 显示面包屑
   showBreadCrumb: true,
+  // 显示面包屑图标
+  showBreadCrumbIcon: false,
 
   // 使用error-handler-plugin
   useErrorHandle: isProdMode(),
 
   //  开启页面切换动画
   openRouterTransition: true,
+
   // 路由切换动画
-  routerTransition: RouterTransitionEnum.ZOOM_FADE,
+  routerTransition: RouterTransitionEnum.FADE_SIDE,
 
   // 是否开启登录安全校验
   openLoginVerify: true,

@@ -1,4 +1,4 @@
-import type { Form, ValidationRule } from 'ant-design-vue/types/form/form';
+import type { NamePath, RuleObject } from 'ant-design-vue/lib/form/interface';
 import type { VNode } from 'vue';
 import type { BasicButtonProps } from '/@/components/Button/types';
 import type { FormItem } from './formItem';
@@ -12,32 +12,43 @@ export interface RenderCallbackParams {
   model: any;
   field: string;
 }
-export interface FormActionType extends Form {
-  submit(): Promise<void>;
-  setFieldsValue<T>(values: T): void;
-  resetFields(): Promise<any>;
+
+export interface ButtonProps extends BasicButtonProps {
+  text?: string;
+}
+
+export interface FormActionType {
+  submit: () => Promise<void>;
+  setFieldsValue: <T>(values: T) => void;
+  resetFields: () => Promise<any>;
   getFieldsValue: () => any;
   clearValidate: (name?: string | string[]) => void;
-  updateSchema(data: Partial<FormSchema> | Partial<FormSchema>[]): void;
-  setProps(formProps: Partial<FormProps>): void;
-  removeSchemaByFiled(field: string | string[]): void;
-  appendSchemaByField(schema: FormSchema, prefixField?: string): void;
+  updateSchema: (data: Partial<FormSchema> | Partial<FormSchema>[]) => void;
+  setProps: (formProps: Partial<FormProps>) => void;
+  removeSchemaByFiled: (field: string | string[]) => void;
+  appendSchemaByField: (schema: FormSchema, prefixField?: string) => void;
+  validateFields: (nameList?: NamePath[]) => Promise<any>;
+  validate: (nameList?: NamePath[]) => Promise<any>;
+  scrollToField: (name: NamePath, options?: ScrollOptions) => void;
 }
 export type RegisterFn = (formInstance: FormActionType) => void;
 
 export type UseFormReturnType = [RegisterFn, FormActionType];
 
 export interface FormProps {
+  // 表单值
+  model?: any;
   // 整个表单所有项宽度
   labelWidth?: number | string;
-
+  // 重置时提交
+  submitOnReset?: boolean;
   // 整个表单通用Col配置
   labelCol?: Partial<ColEx>;
   // 整个表单通用Col配置
   wrapperCol?: Partial<ColEx>;
 
   // 通用col配置
-  baseColProps?: any;
+  baseColProps?: Partial<ColEx>;
 
   // 表单配置规则
   schemas?: FormSchema[];
@@ -48,13 +59,13 @@ export interface FormProps {
   // 空白行span
   emptySpan?: number | Partial<ColEx>;
   // 表单内部组件大小
-  size: 'default' | 'small' | 'large';
+  size?: 'default' | 'small' | 'large';
   // 是否禁用
   disabled?: boolean;
   // 时间区间字段映射成多个
   fieldMapToTime?: FieldMapToTime;
   // 自动设置placeholder
-  autoSetPlaceHolder: boolean;
+  autoSetPlaceHolder?: boolean;
   // 校验信息是否加入label
   rulesMessageJoinLabel?: boolean;
   // 是否显示收起展开按钮
@@ -62,25 +73,25 @@ export interface FormProps {
   // 超过指定行数自动收起
   autoAdvancedLine?: number;
   // 是否显示操作按钮
-  showActionButtonGroup: boolean;
+  showActionButtonGroup?: boolean;
 
   // 重置按钮配置
-  resetButtonOptions: Partial<BasicButtonProps>;
+  resetButtonOptions?: Partial<ButtonProps>;
 
   // 确认按钮配置
-  submitButtonOptions: Partial<BasicButtonProps>;
+  submitButtonOptions?: Partial<ButtonProps>;
 
   // 操作列配置
-  actionColOptions: Partial<ColEx>;
+  actionColOptions?: Partial<ColEx>;
 
   // 显示重置按钮
-  showResetButton: boolean;
+  showResetButton?: boolean;
   // 显示确认按钮
-  showSubmitButton: boolean;
+  showSubmitButton?: boolean;
 
-  resetFunc: () => Promise<void>;
-  submitFunc: () => Promise<void>;
-  transformDateFunc: (date: any) => string;
+  resetFunc?: () => Promise<void>;
+  submitFunc?: () => Promise<void>;
+  transformDateFunc?: (date: any) => string;
   colon?: boolean;
 }
 export interface FormSchema {
@@ -103,7 +114,7 @@ export interface FormSchema {
   componentProps?: any;
 
   // 校验规则
-  rules?: ValidationRule[];
+  rules?: RuleObject[];
   // 校验信息是否加入label
   rulesMessageJoinLabel?: boolean;
 
@@ -128,7 +139,7 @@ export interface FormSchema {
   render?: (renderCallbackParams: RenderCallbackParams) => VNode | VNode[] | string;
 
   // 渲染 col内容,需要外层包裹 form-item
-  renderColContent?: (renderCallbackParams: RenderCallbackParams) => VNode | VNode[];
+  renderColContent?: (renderCallbackParams: RenderCallbackParams) => VNode | VNode[] | string;
 
   renderComponentContent?: (renderCallbackParams: RenderCallbackParams) => any;
 
@@ -140,7 +151,7 @@ export interface FormSchema {
 
   dynamicDisabled?: boolean | ((renderCallbackParams: RenderCallbackParams) => boolean);
 
-  dynamicRules?: (renderCallbackParams: RenderCallbackParams) => ValidationRule[];
+  dynamicRules?: (renderCallbackParams: RenderCallbackParams) => RuleObject[];
 }
 export interface HelpComponentProps {
   maxWidth: string;

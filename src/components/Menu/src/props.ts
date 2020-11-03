@@ -11,6 +11,10 @@ export const basicProps = {
     type: Boolean as PropType<boolean>,
     default: false,
   },
+  collapsedShowTitle: {
+    type: Boolean as PropType<boolean>,
+    default: false,
+  },
   flatItems: {
     type: Array as PropType<Menu[]>,
     default: () => [],
@@ -27,7 +31,7 @@ export const basicProps = {
   },
   // 菜单组件的mode属性
   mode: {
-    type: String as PropType<string>,
+    type: String as PropType<MenuModeEnum>,
     default: MenuModeEnum.INLINE,
   },
   type: {
@@ -49,6 +53,10 @@ export const basicProps = {
   isAppMenu: {
     type: Boolean as PropType<boolean>,
     default: true,
+  },
+  isTop: {
+    type: Boolean as PropType<boolean>,
+    default: false,
   },
   beforeClickFn: {
     type: Function as PropType<Fn>,

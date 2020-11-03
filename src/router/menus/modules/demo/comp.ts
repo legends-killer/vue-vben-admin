@@ -6,16 +6,20 @@ const menu: MenuModule = {
     path: '/comp',
     children: [
       {
-        path: '/basic',
+        path: 'basic',
         name: '基础组件',
       },
       {
-        path: '/countTo',
+        path: 'countTo',
         name: '数字动画',
+      },
+      {
+        path: 'transition',
+        name: '动画组件',
       },
 
       {
-        path: '/scroll',
+        path: 'scroll',
         name: '滚动组件',
         children: [
           {
@@ -33,37 +37,41 @@ const menu: MenuModule = {
         ],
       },
       {
-        path: '/modal',
+        path: 'modal',
         name: '弹窗扩展',
       },
       {
-        path: '/drawer',
+        path: 'drawer',
         name: '抽屉扩展',
       },
       {
-        path: '/desc',
+        path: 'desc',
         name: '详情组件',
       },
       {
-        path: '/verify',
+        path: 'lazy',
+        name: '懒加载组件',
+      },
+      {
+        path: 'verify',
         name: '验证组件',
         children: [
           {
-            path: '/drag',
+            path: 'drag',
             name: '拖拽校验',
           },
           {
-            path: '/rotate',
+            path: 'rotate',
             name: '图片还原校验',
           },
         ],
       },
       {
-        path: '/qrcode',
+        path: 'qrcode',
         name: '二维码组件',
       },
       {
-        path: '/strength-meter',
+        path: 'strength-meter',
         name: '密码强度组件',
       },
     ],

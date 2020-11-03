@@ -1,11 +1,12 @@
+import type { AppRouteRecordRaw } from '/@/router/types';
+
 import { computed, toRaw, unref } from 'vue';
+import { useRouter } from 'vue-router';
+import router from '/@/router';
 
 import { tabStore } from '/@/store/modules/tab';
 import { appStore } from '/@/store/modules/app';
 
-import { AppRouteRecordRaw } from '/@/router/types';
-import { useRouter } from 'vue-router';
-import router from '/@/router';
 import { unique } from '/@/utils';
 
 export function useFrameKeepAlive() {
@@ -38,7 +39,7 @@ export function useFrameKeepAlive() {
   const getOpenTabList = computed((): string[] => {
     return tabStore.getTabsState.reduce((prev: string[], next) => {
       if (next.meta && Reflect.has(next.meta, 'frameSrc')) {
-        prev.push(next.path);
+        prev.push(next.path!);
       }
       return prev;
     }, []);

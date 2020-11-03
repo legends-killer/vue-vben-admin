@@ -1,17 +1,20 @@
-import { defineComponent, computed, unref, toRef } from 'vue';
-import { Form, Col } from 'ant-design-vue';
-import { componentMap } from './componentMap';
-
 import type { PropType } from 'vue';
 import type { FormProps } from './types/form';
 import type { FormSchema } from './types/form';
-import { isBoolean, isFunction } from '/@/utils/is';
-import { useItemLabelWidth } from './hooks/useLabelWidth';
-import { getSlot } from '/@/utils/helper/tsxHelper';
+import type { ValidationRule } from 'ant-design-vue/lib/form/Form';
+
+import { defineComponent, computed, unref, toRef } from 'vue';
+import { Form, Col } from 'ant-design-vue';
+import { componentMap } from './componentMap';
 import { BasicHelp } from '/@/components/Basic';
+
+import { isBoolean, isFunction } from '/@/utils/is';
+import { getSlot } from '/@/utils/helper/tsxHelper';
 import { createPlaceholderMessage } from './helper';
 import { upperFirst, cloneDeep } from 'lodash-es';
-import { ValidationRule } from 'ant-design-vue/types/form/form';
+
+import { useItemLabelWidth } from './hooks/useLabelWidth';
+
 export default defineComponent({
   name: 'BasicFormItem',
   inheritAttrs: false,
@@ -50,10 +53,26 @@ export default defineComponent({
         schema: schema,
       };
     });
-    const getShowRef = computed(() => {
-      const { show, ifShow, isAdvanced } = props.schema;
+
+    const getDisableRef = computed(() => {
+      const { disabled: globDisabled } = props.formProps;
+      const { dynamicDisabled } = props.schema;
+      let disabled = !!globDisabled;
+      if (isBoolean(dynamicDisabled)) {
+        disabled = dynamicDisabled;
+      }
+
+      if (isFunction(dynamicDisabled)) {
+        disabled = dynamicDisabled(unref(getValuesRef));
+      }
+
+      return disabled;
+    });
+
+    function getShow() {
+      const { show, ifShow } = props.schema;
       const { showAdvancedButton } = props.formProps;
-      const itemIsAdvanced = showAdvancedButton ? !!isAdvanced : true;
+      const itemIsAdvanced = showAdvancedButton ? !!props.schema.isAdvanced : true;
       let isShow = true;
       let isIfShow = true;
 
@@ -71,22 +90,7 @@ export default defineComponent({
       }
       isShow = isShow && itemIsAdvanced;
       return { isShow, isIfShow };
-    });
-
-    const getDisableRef = computed(() => {
-      const { disabled: globDisabled } = props.formProps;
-      const { dynamicDisabled } = props.schema;
-      let disabled = !!globDisabled;
-      if (isBoolean(dynamicDisabled)) {
-        disabled = dynamicDisabled;
-      }
-
-      if (isFunction(dynamicDisabled)) {
-        disabled = dynamicDisabled(unref(getValuesRef));
-      }
-
-      return disabled;
-    });
+    }
 
     function handleRules(): ValidationRule[] {
       const {
@@ -139,6 +143,7 @@ export default defineComponent({
       }
       return rules;
     }
+
     function renderComponent() {
       const {
         componentProps,
@@ -163,7 +168,6 @@ export default defineComponent({
           }
         },
       };
-
       const Comp = componentMap.get(component);
 
       const { autoSetPlaceHolder, size } = props.formProps;
@@ -189,9 +193,22 @@ export default defineComponent({
       const bindValue = {
         [isCheck ? 'checked' : 'value']: (props.formModel as any)[field],
       };
+      // TODO先兼容antd的警告，后面官方修复后删除
+      if (component === 'Select') {
+        if (Reflect.has(propsData, 'options')) {
+          propsData.options = propsData.options.map((item: any) => {
+            return {
+              key: item.value,
+              ...item,
+            };
+          });
+        }
+      }
+
       if (!renderComponentContent) {
         return <Comp {...propsData} {...on} {...bindValue} />;
       }
+
       return (
         <Comp {...propsData} {...on} {...bindValue}>
           {{
@@ -213,6 +230,7 @@ export default defineComponent({
         </span>
       );
     }
+
     function renderItem() {
       const { itemProps, slot, render, field } = props.schema;
       const { labelCol, wrapperCol } = unref(itemLabelWidthRef);
@@ -228,7 +246,7 @@ export default defineComponent({
         <Form.Item
           name={field}
           colon={colon}
-          {...itemProps}
+          {...(itemProps as any)}
           label={renderLabelHelpMessage()}
           rules={handleRules()}
           labelCol={labelCol}
@@ -242,11 +260,8 @@ export default defineComponent({
       const { colProps = {}, colSlot, renderColContent, component } = props.schema;
       if (!componentMap.has(component)) return null;
       const { baseColProps = {} } = props.formProps;
-
       const realColProps = { ...baseColProps, ...colProps };
-
-      const { isIfShow, isShow } = unref(getShowRef);
-
+      const { isIfShow, isShow } = getShow();
       const getContent = () => {
         return colSlot
           ? getSlot(slots, colSlot)

@@ -1,15 +1,18 @@
 import type { Router } from 'vue-router';
 
 import { Modal, notification } from 'ant-design-vue';
-import { AxiosCanceler } from '/@/utils/http/axios/axiosCancel';
-import { createPageTitleGuard } from './pageTitleGuard';
+
 import { createProgressGuard } from './progressGuard';
 import { createPermissionGuard } from './permissionGuard';
 import { createPageLoadingGuard } from './pageLoadingGuard';
-import { useSetting } from '/@/hooks/core/useSetting';
-import { getIsOpenTab } from '/@/utils/helper/routeHelper';
 
-const { projectSetting } = useSetting();
+import { useSetting } from '/@/hooks/core/useSetting';
+
+import { getIsOpenTab, setCurrentTo } from '/@/utils/helper/routeHelper';
+import { setTitle } from '/@/utils/browser';
+import { AxiosCanceler } from '/@/utils/http/axios/axiosCancel';
+
+const { projectSetting, globSetting } = useSetting();
 export function createGuard(router: Router) {
   const { openNProgress, closeMessageOnSwitch, removeAllHttpPending } = projectSetting;
   let axiosCanceler: AxiosCanceler | null;
@@ -17,7 +20,7 @@ export function createGuard(router: Router) {
     axiosCanceler = new AxiosCanceler();
   }
   router.beforeEach(async (to) => {
-    const isOpen = getIsOpenTab(to.path);
+    const isOpen = getIsOpenTab(to.fullPath);
     to.meta.inTab = isOpen;
     try {
       if (closeMessageOnSwitch) {
@@ -30,9 +33,16 @@ export function createGuard(router: Router) {
     } catch (error) {
       console.warn('basic guard error:' + error);
     }
+    setCurrentTo(to);
+    return true;
   });
+
+  router.afterEach((to) => {
+    // change html title
+    setTitle(to.meta.title, globSetting.title);
+  });
+
   openNProgress && createProgressGuard(router);
   createPermissionGuard(router);
-  createPageTitleGuard(router);
   createPageLoadingGuard(router);
 }
